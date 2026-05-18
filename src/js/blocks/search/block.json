@@ -1,0 +1,38 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "filtron/search",
+	"title": "Filtron search",
+	"category": "filtron",
+	"icon": "search",
+	"description": "Search input bound to indexed text.",
+	"keywords": [ "filtron", "filter", "search" ],
+	"textdomain": "filtron",
+	"usesContext": [ "postType" ],
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": ""
+		},
+		"sourceType": {
+			"type": "string",
+			"default": "meta"
+		},
+		"sourceKey": {
+			"type": "string",
+			"default": ""
+		},
+		"showCount": {
+			"type": "boolean",
+			"default": true
+		},
+		"logic": {
+			"type": "string",
+			"default": "OR"
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "filtron-blocks-editor"
+}

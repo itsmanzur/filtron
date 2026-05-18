@@ -1,0 +1,20 @@
+/**
+ * Skeleton loading for Filtron result grids (shimmer lives in filtron-frontend.css).
+ *
+ * @package Filtron
+ */
+
+.filtron-skeleton {
+	pointer-events: none;
+	min-height: 200px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.filtron-skeleton .filtron-skel {
+		animation: none !important;
+	}
+}
+
+.filtron-option--dim {
+	opacity: 0.45;
+}

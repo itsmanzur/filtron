@@ -1,0 +1,38 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "filtron/range",
+	"title": "Filtron range",
+	"category": "filtron",
+	"icon": "leftright",
+	"description": "Numeric range slider filter.",
+	"keywords": [ "filtron", "filter", "range", "slider" ],
+	"textdomain": "filtron",
+	"usesContext": [ "postType" ],
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": ""
+		},
+		"sourceType": {
+			"type": "string",
+			"default": "meta"
+		},
+		"sourceKey": {
+			"type": "string",
+			"default": ""
+		},
+		"showCount": {
+			"type": "boolean",
+			"default": true
+		},
+		"logic": {
+			"type": "string",
+			"default": "OR"
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "filtron-blocks-editor"
+}

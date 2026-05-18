@@ -1,0 +1,178 @@
+/**
+ * Filtron — block editor in-canvas previews (scoped).
+ *
+ * @package Filtron
+ */
+
+.filtron-editor-preview {
+	max-width: 320px;
+	padding: 12px 14px;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+	font-size: 13px;
+	line-height: 1.45;
+	color: #1e293b;
+}
+
+.filtron-editor-preview--placeholder {
+	background: #f8fafc;
+	border-style: dashed;
+	color: #64748b;
+}
+
+.filtron-editor-preview__hint {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.filtron-editor-preview__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.filtron-editor-preview__title {
+	font-weight: 700;
+	font-size: 14px;
+	color: #0f172a;
+}
+
+.filtron-editor-preview__badge {
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: #eff6ff;
+	color: #1d4ed8;
+	border: 1px solid #bfdbfe;
+}
+
+.filtron-editor-preview__options {
+	list-style: none;
+	margin: 0 0 10px;
+	padding: 0;
+	display: grid;
+	gap: 8px;
+}
+
+.filtron-editor-preview__option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: #334155;
+}
+
+.filtron-editor-preview__option input {
+	margin: 0;
+	pointer-events: none;
+	accent-color: #2563eb;
+}
+
+.filtron-editor-preview__count {
+	margin-left: auto;
+	font-size: 12px;
+	color: #94a3b8;
+}
+
+.filtron-editor-preview__option--muted {
+	color: #94a3b8;
+	font-style: italic;
+}
+
+.filtron-editor-preview__source {
+	font-size: 11px;
+	color: #64748b;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	word-break: break-all;
+	padding-top: 8px;
+	border-top: 1px solid #f1f5f9;
+}
+
+.filtron-editor-preview__tag {
+	display: inline-block;
+	margin-right: 6px;
+	padding: 1px 6px;
+	border-radius: 4px;
+	background: #f1f5f9;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	color: #475569;
+}
+
+/* Range */
+.filtron-editor-preview--range .filtron-editor-preview__track {
+	height: 8px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, #93c5fd, #2563eb);
+	margin: 12px 0 8px;
+	opacity: 0.85;
+}
+
+.filtron-editor-preview__readout {
+	display: flex;
+	justify-content: space-between;
+	font-size: 12px;
+	font-weight: 600;
+	color: #475569;
+	margin-bottom: 4px;
+}
+
+/* Search */
+.filtron-editor-preview--search .filtron-editor-preview__input {
+	width: 100%;
+	margin-top: 6px;
+	padding: 8px 10px;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	font-size: 13px;
+	background: #fff;
+	color: #94a3b8;
+	pointer-events: none;
+}
+
+.filtron-editor-preview--container-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 8px;
+	max-width: none;
+	margin-bottom: 10px;
+	padding: 10px 12px;
+}
+
+.filtron-editor-preview--container-bar .filtron-editor-preview__title {
+	font-size: 13px;
+}
+
+.filtron-editor-preview--container-bar .filtron-editor-preview__badge {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.filtron-container-block {
+	border: 1px dashed #cbd5e1;
+	border-radius: 12px;
+	padding: 12px;
+	background: #fafbfc;
+}
+
+.filtron-container-block .filtron-block-placeholder {
+	margin-top: 0;
+}
+
+.filtron-block-placeholder {
+	margin: 0 0 8px;
+	font-size: 13px;
+	color: #64748b;
+}

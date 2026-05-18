@@ -1,0 +1,23 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "filtron/container",
+	"title": "Filtron (container)",
+	"category": "filtron",
+	"icon": "screenoptions",
+	"description": "Wrap Filtron filter blocks and bind a filter group.",
+	"keywords": [ "filtron", "filter", "container" ],
+	"textdomain": "filtron",
+	"usesContext": [ "postType" ],
+	"attributes": {
+		"groupId": {
+			"type": "number",
+			"default": 0
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ]
+	},
+	"editorScript": "filtron-blocks-editor"
+}

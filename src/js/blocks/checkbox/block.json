@@ -1,0 +1,38 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "filtron/checkbox",
+	"title": "Filtron checkbox",
+	"category": "filtron",
+	"icon": "yes",
+	"description": "Checkbox filter (taxonomy or meta facets).",
+	"keywords": [ "filtron", "filter", "checkbox" ],
+	"textdomain": "filtron",
+	"usesContext": [ "postType" ],
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": ""
+		},
+		"sourceType": {
+			"type": "string",
+			"default": "taxonomy"
+		},
+		"sourceKey": {
+			"type": "string",
+			"default": ""
+		},
+		"showCount": {
+			"type": "boolean",
+			"default": true
+		},
+		"logic": {
+			"type": "string",
+			"default": "OR"
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "filtron-blocks-editor"
+}

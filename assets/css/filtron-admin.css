@@ -1,0 +1,159 @@
+/*
+ * Filtron Admin — filter editor screen (Configure Filters).
+ * Loaded only on group edit screen.
+ */
+
+/* ============================================================
+   9. Filter Items Builder (Configure Filters)
+   ============================================================ */
+.filtron-builder-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Filter item card */
+.filtron-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid var(--flt-gray-200);
+  border-radius: var(--flt-radius);
+  margin-bottom: 8px;
+  transition: box-shadow var(--flt-transition), border-color var(--flt-transition);
+  cursor: grab;
+}
+
+.filtron-filter-item:hover {
+  border-color: var(--flt-gray-300);
+  box-shadow: var(--flt-shadow);
+}
+
+.filtron-filter-item.sortable-ghost {
+  opacity: .4;
+  background: var(--flt-primary-mute);
+  border-color: #bfdbfe;
+}
+
+.filtron-filter-item.sortable-chosen {
+  box-shadow: var(--flt-shadow-lg);
+  border-color: var(--flt-primary);
+}
+
+.filtron-filter-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.filtron-filter-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--flt-gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filtron-filter-item-meta {
+  font-size: 11px;
+  color: var(--flt-gray-400);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filtron-filter-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   10. Drag Handle
+   ============================================================ */
+.filtron-drag-handle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 6px;
+  cursor: grab;
+  color: var(--flt-gray-300);
+  transition: color var(--flt-transition);
+  flex-shrink: 0;
+  border-radius: var(--flt-radius-sm);
+}
+
+.filtron-drag-handle:hover {
+  color: var(--flt-gray-500);
+  background: var(--flt-gray-100);
+}
+
+.filtron-drag-handle:active {
+  cursor: grabbing;
+}
+
+.filtron-drag-handle span {
+  display: block;
+  width: 14px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+/* ============================================================
+   11. Filter Type Badges
+   ============================================================ */
+.filtron-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  flex-shrink: 0;
+}
+
+.filtron-type-checkbox {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.filtron-type-range {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.filtron-type-search {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.filtron-type-swatch {
+  background: #fdf4ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+
+.filtron-type-select {
+  background: #ecfeff;
+  color: #0e7490;
+  border: 1px solid #a5f3fc;
+}
+
+
+@media screen and (max-width: 960px) {
+  .filtron-builder-layout {
+    grid-template-columns: 1fr;
+  }
+}

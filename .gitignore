@@ -1,0 +1,20 @@
+# Local reference/design material.
+For reference/
+
+# Dependencies and build output.
+node_modules/
+vendor/
+dist/
+build/
+*.zip
+
+# Logs and local environment files.
+*.log
+.env
+.env.*
+
+# OS/editor noise.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

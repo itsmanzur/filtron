@@ -1,0 +1,22 @@
+You are building "Filtron" — the FREE WordPress filter plugin.
+filtron-pro is a separate paid plugin that depends on this one.
+
+ALWAYS follow these rules:
+
+1.  PHP prefix: Filtron_ for classes, filtron_ for functions/hooks/options
+2.  DB tables: {$wpdb->prefix}filtron_* format
+3.  Security: ALWAYS use $wpdb->prepare() for SQL, ALWAYS escape output,
+    ALWAYS verify nonce before any action
+4.  Performance: Query ONLY from wp_filtron_index,
+    NEVER JOIN wp_postmeta for filtering
+5.  JS: Vanilla JS only in frontend — jQuery is FORBIDDEN
+6.  CSS: BEM naming — .filtron-widget__element--modifier
+7.  Never expose stack traces or internal errors to the frontend
+8.  All user input MUST pass through Filtron_Security::sanitize_filter_input()
+9.  File naming: class-filtron-{name}.php for PHP, filtron-{name}.js for JS
+10. Always expose hooks (apply_filters / do_action) so filtron-pro can extend
+11. NEVER add pro-only features here — keep this plugin lean and free
+12. Constants: FILTRON_VERSION, FILTRON_DB_VERSION,
+    FILTRON_PLUGIN_DIR, FILTRON_PLUGIN_URL
+
+When generating code: Is this Fast? Is this Secure? Is this Extensible?
