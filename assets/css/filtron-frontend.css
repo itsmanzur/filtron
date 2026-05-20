@@ -45,7 +45,8 @@
 
 .filtron-filter-checkbox,
 .filtron-filter-range,
-.filtron-filter-search {
+.filtron-filter-search,
+.filtron-filter-select {
 	margin-bottom: 14px;
 	padding-bottom: 12px;
 	border-bottom: 1px solid #e2e8f0;
@@ -53,7 +54,8 @@
 
 .filtron-filter-checkbox:last-child,
 .filtron-filter-range:last-child,
-.filtron-filter-search:last-child {
+.filtron-filter-search:last-child,
+.filtron-filter-select:last-child {
 	margin-bottom: 0;
 	padding-bottom: 0;
 	border-bottom: none;
@@ -61,7 +63,8 @@
 
 .filtron-filter-checkbox__title,
 .filtron-filter-range__title,
-.filtron-filter-search__label {
+.filtron-filter-search__label,
+.filtron-filter-select__label {
 	display: block;
 	font-size: 14px;
 	font-weight: 700;
@@ -120,6 +123,26 @@
 	border-radius: 8px;
 	padding: 8px 10px;
 	font-size: 13px;
+}
+
+.filtron-filter-select__input {
+	width: 100%;
+	min-height: 38px;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	background: #fff;
+	color: #0f172a;
+	padding: 8px 34px 8px 10px;
+	font-size: 13px;
+	line-height: 1.4;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+	cursor: pointer;
+}
+
+.filtron-filter-select__input:focus {
+	border-color: var(--filtron-accent);
+	outline: 2px solid var(--filtron-accent-border);
+	outline-offset: 1px;
 }
 
 .filtron-filter-search__dropdown {

@@ -171,14 +171,14 @@ class Filtron_Filter_Range extends Filtron_Filter_Base {
 	 * Currency or unit prefix (already safe for HTML context as plain text).
 	 */
 	public function get_prefix(): string {
-		return isset( $this->config['prefix'] ) ? (string) $this->config['prefix'] : '';
+		return isset( $this->config['prefix'] ) ? self::normalize_display_text( (string) $this->config['prefix'] ) : '';
 	}
 
 	/**
 	 * Suffix after values (e.g. currency symbol on the right).
 	 */
 	public function get_suffix(): string {
-		return isset( $this->config['suffix'] ) ? (string) $this->config['suffix'] : '';
+		return isset( $this->config['suffix'] ) ? self::normalize_display_text( (string) $this->config['suffix'] ) : '';
 	}
 
 	/**

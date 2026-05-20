@@ -35,6 +35,7 @@ class Filtron_Autoload {
 		'Filter'    => 'filters',
 		'Settings'  => 'admin',
 		'Gutenberg' => 'integrations',
+		'Shortcode' => 'integrations',
 	);
 
 	/**

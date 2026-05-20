@@ -40,7 +40,7 @@ if ( '' === $fkey ) {
 		<?php foreach ( $options as $opt ) : ?>
 			<?php
 			$val   = isset( $opt['value'] ) ? (string) $opt['value'] : '';
-			$label = isset( $opt['label'] ) ? (string) $opt['label'] : $val;
+			$label = isset( $opt['label'] ) ? Filtron_Filter_Base::normalize_display_text( (string) $opt['label'] ) : $val;
 			$cnt   = isset( $opt['count'] ) ? (int) $opt['count'] : 0;
 			if ( '' === $val ) {
 				continue;

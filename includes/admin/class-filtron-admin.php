@@ -327,6 +327,7 @@ class Filtron_Admin {
 		echo '<th scope="col">' . esc_html__( 'Name', 'filtron' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Post type', 'filtron' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Active', 'filtron' ) . '</th>';
+		echo '<th scope="col">' . esc_html__( 'Shortcode', 'filtron' ) . '</th>';
 		echo '<th scope="col">' . esc_html__( 'Actions', 'filtron' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
@@ -353,6 +354,7 @@ class Filtron_Admin {
 			echo '<td><span class="filtron-group-name">' . esc_html( (string) ( $row['name'] ?? '' ) ) . '</span></td>';
 			echo '<td><span class="filtron-post-type">' . esc_html( (string) ( $row['post_type'] ?? '' ) ) . '</span></td>';
 			echo '<td><span class="' . esc_attr( $badge ) . '">' . esc_html( $label ) . '</span></td>';
+			echo '<td>' . self::render_shortcode_copy_control( $id, true ) . '</td>';
 			echo '<td><div class="filtron-row-actions"><a class="filtron-action-link" href="' . esc_url( $edit ) . '">' . esc_html__( 'Configure filters', 'filtron' ) . '</a></div></td>';
 			echo '</tr>';
 		}
@@ -406,6 +408,7 @@ class Filtron_Admin {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=filtron-groups' ) ); ?>"><?php esc_html_e( '&larr; Back to groups', 'filtron' ); ?></a>
 			</p>
 			<p class="description"><?php esc_html_e( 'Drag rows to reorder facets. Add Filter creates a new row; Ctrl+S (Cmd+S on Mac) saves the filter you are editing.', 'filtron' ); ?></p>
+			<?php echo self::render_shortcode_copy_panel( $group_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
 			<div
 				id="filtron-admin-root"
@@ -637,8 +640,10 @@ class Filtron_Admin {
 			$value = isset( $theme_tokens[ $token_key ] ) ? (string) $theme_tokens[ $token_key ] : '';
 			echo '<div class="filtron-settings-token-item">';
 			echo '<label class="filtron-settings-token-label" for="filtron-theme-token-' . esc_attr( $token_key ) . '">' . esc_html( $token_label ) . '</label>';
+			echo '<div class="filtron-settings-token-control">';
 			echo '<input id="filtron-theme-token-' . esc_attr( $token_key ) . '" class="filtron-settings-token-input" type="color" name="filtron_theme_tokens[' . esc_attr( $token_key ) . ']" value="' . esc_attr( $value ) . '" />';
 			echo '<code class="filtron-settings-token-value">' . esc_html( strtoupper( $value ) ) . '</code>';
+			echo '</div>';
 			echo '</div>';
 		}
 		echo '</div>';
@@ -947,6 +952,56 @@ class Filtron_Admin {
 	}
 
 	/**
+	 * Shortcode string for a group.
+	 *
+	 * @param int $group_id Group id.
+	 */
+	private static function get_group_shortcode( int $group_id ): string {
+		return '[filtron_group id="' . max( 0, $group_id ) . '" layout="grid"]';
+	}
+
+	/**
+	 * Compact copyable shortcode control.
+	 *
+	 * @param int  $group_id Group id.
+	 * @param bool $compact  Compact table variant.
+	 */
+	private static function render_shortcode_copy_control( int $group_id, bool $compact = false ): string {
+		$shortcode = self::get_group_shortcode( $group_id );
+		$classes   = 'filtron-shortcode-copy';
+		if ( $compact ) {
+			$classes .= ' filtron-shortcode-copy--compact';
+		}
+
+		$html  = '<div class="' . esc_attr( $classes ) . '">';
+		$html .= '<input type="text" class="filtron-shortcode-copy__input" value="' . esc_attr( $shortcode ) . '" readonly aria-label="' . esc_attr__( 'Filtron shortcode', 'filtron' ) . '" />';
+		$html .= '<button type="button" class="filtron-shortcode-copy__button" data-filtron-copy-shortcode="' . esc_attr( $shortcode ) . '" data-filtron-copy-label="' . esc_attr__( 'Copy', 'filtron' ) . '" data-filtron-copied-label="' . esc_attr__( 'Copied', 'filtron' ) . '">';
+		$html .= '<span class="dashicons dashicons-clipboard" aria-hidden="true"></span>';
+		$html .= '<span class="filtron-shortcode-copy__button-text">' . esc_html__( 'Copy', 'filtron' ) . '</span>';
+		$html .= '</button>';
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	/**
+	 * Full shortcode helper shown on the group editor.
+	 *
+	 * @param int $group_id Group id.
+	 */
+	private static function render_shortcode_copy_panel( int $group_id ): string {
+		$html  = '<div class="filtron-shortcode-panel">';
+		$html .= '<div class="filtron-shortcode-panel__body">';
+		$html .= '<h2 class="filtron-shortcode-panel__title">' . esc_html__( 'Shortcode', 'filtron' ) . '</h2>';
+		$html .= '<p class="filtron-shortcode-panel__desc">' . esc_html__( 'Paste this shortcode into any page, post, or widget area to show this filter group.', 'filtron' ) . '</p>';
+		$html .= '</div>';
+		$html .= self::render_shortcode_copy_control( $group_id, false );
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	/**
 	 * Enqueue scripts only on filter editor screen.
 	 *
 	 * @param string $hook_suffix Current screen id.
@@ -974,6 +1029,13 @@ class Filtron_Admin {
 				FILTRON_PLUGIN_URL . 'assets/css/filtron-admin-global.css',
 				array(),
 				$ver
+			);
+			wp_enqueue_script(
+				'filtron-admin-global',
+				FILTRON_PLUGIN_URL . 'assets/js/filtron-admin-global.js',
+				array(),
+				$ver,
+				true
 			);
 			if ( $is_editor ) {
 				wp_enqueue_style(
@@ -1196,6 +1258,9 @@ class Filtron_Admin {
 		}
 		if ( isset( $config['show_count'] ) ) {
 			$out['show_count'] = (bool) $config['show_count'];
+		}
+		if ( isset( $config['placeholder'] ) ) {
+			$out['placeholder'] = sanitize_text_field( (string) $config['placeholder'] );
 		}
 		if ( isset( $config['prefix'] ) ) {
 			$out['prefix'] = sanitize_text_field( (string) $config['prefix'] );

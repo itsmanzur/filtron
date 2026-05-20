@@ -63,7 +63,7 @@ $suffix = $filter->get_suffix();
 		<?php endif; ?>
 		<span class="filtron-filter-range__readout">
 			<span class="filtron-filter-range__readout-min"><?php echo esc_html( (string) $cmin ); ?></span>
-			<span class="filtron-filter-range__sep"> — </span>
+			<span class="filtron-filter-range__sep"> &mdash; </span>
 			<span class="filtron-filter-range__readout-max"><?php echo esc_html( (string) $cmax ); ?></span>
 		</span>
 		<?php if ( '' !== $suffix ) : ?>

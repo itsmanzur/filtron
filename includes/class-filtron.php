@@ -58,6 +58,7 @@ class Filtron {
 		$this->loader->add_action( 'plugins_loaded', self::class, 'load_assets', 12 );
 		$this->loader->add_action( 'plugins_loaded', self::class, 'load_admin', 11 );
 		$this->loader->add_action( 'plugins_loaded', self::class, 'load_gutenberg', 14 );
+		$this->loader->add_action( 'plugins_loaded', self::class, 'load_shortcode', 16 );
 	}
 
 	/**
@@ -111,6 +112,13 @@ class Filtron {
 	 */
 	public static function load_gutenberg(): void {
 		Filtron_Gutenberg::register();
+	}
+
+	/**
+	 * Shortcodes.
+	 */
+	public static function load_shortcode(): void {
+		Filtron_Shortcode::register();
 	}
 
 	/**

@@ -334,6 +334,9 @@
 					w.querySelectorAll('input.filtron-filter-checkbox__input[type="checkbox"]').forEach((inp) => {
 						inp.addEventListener('change', () => self.commitFromDom({ pushUrl: true }));
 					});
+				} else if (type === 'select') {
+					const select = w.querySelector('.filtron-filter-select__input');
+					if (select) select.addEventListener('change', () => self.commitFromDom({ pushUrl: true }));
 				} else if (type === 'range') {
 					self.initRange(/** @type {HTMLElement} */ (w), opt);
 				} else if (type === 'search') {
@@ -449,7 +452,7 @@
 			const id = `${typ}:${key}`;
 			const row = this.state.filters[id];
 			if (!row || typeof row !== 'object') return;
-			if (typ === 'checkbox' && val != null) {
+			if ((typ === 'checkbox' || typ === 'select') && val != null) {
 				const values = Array.isArray(row.values) ? row.values.filter((v) => String(v) !== String(val)) : [];
 				if (values.length === 0) delete this.state.filters[id];
 				else row.values = values;
@@ -814,9 +817,23 @@
 								String(row.key)
 							)}" data-filtron-chip-value="${escHtml(String(v))}" aria-label="${chipAria}"><span class="filtron-chip__text">${escHtml(
 								String(v)
-							)}</span><span class="filtron-chip__x" aria-hidden="true">×</span></button>`
+							)}</span><span class="filtron-chip__x" aria-hidden="true">&times;</span></button>`
 						);
 					}
+				} else if (t === 'select' && Array.isArray(row.values) && row.values.length) {
+					const v = String(row.values[0]);
+					const chipAria = escHtml(
+						String(i18n.chipRemoveSelect || i18n.chipRemoveCheckbox || 'Remove filter %1$s equals %2$s')
+							.replace('%1$s', String(row.key))
+							.replace('%2$s', v)
+					);
+					parts.push(
+						`<button type="button" class="filtron-chip" data-filtron-chip-remove="1" data-filtron-chip-type="select" data-filtron-chip-key="${escHtml(
+							String(row.key)
+						)}" data-filtron-chip-value="${escHtml(v)}" aria-label="${chipAria}"><span class="filtron-chip__text">${escHtml(
+							v
+						)}</span><span class="filtron-chip__x" aria-hidden="true">&times;</span></button>`
+					);
 				} else if (t === 'range') {
 					if (!this.isRangeRowActive(row)) continue;
 					const chipAria = escHtml(
@@ -825,9 +842,9 @@
 					parts.push(
 						`<button type="button" class="filtron-chip" data-filtron-chip-remove="1" data-filtron-chip-type="range" data-filtron-chip-key="${escHtml(
 							String(row.key)
-						)}" aria-label="${chipAria}"><span class="filtron-chip__text">${escHtml(String(row.key))}: ${escHtml(String(row.min))}–${escHtml(
+						)}" aria-label="${chipAria}"><span class="filtron-chip__text">${escHtml(String(row.key))}: ${escHtml(String(row.min))}&ndash;${escHtml(
 							String(row.max)
-						)}</span><span class="filtron-chip__x" aria-hidden="true">×</span></button>`
+						)}</span><span class="filtron-chip__x" aria-hidden="true">&times;</span></button>`
 					);
 				} else if (t === 'search') {
 					const chipAria = escHtml(
@@ -836,7 +853,7 @@
 					parts.push(
 						`<button type="button" class="filtron-chip" data-filtron-chip-remove="1" data-filtron-chip-type="search" data-filtron-chip-key="${escHtml(
 							String(row.key)
-						)}" aria-label="${chipAria}"><span class="filtron-chip__text">${escHtml(String(row.value || ''))}</span><span class="filtron-chip__x" aria-hidden="true">×</span></button>`
+						)}" aria-label="${chipAria}"><span class="filtron-chip__text">${escHtml(String(row.value || ''))}</span><span class="filtron-chip__x" aria-hidden="true">&times;</span></button>`
 					);
 				}
 			}
@@ -878,6 +895,10 @@
 				}
 				if (t === 'range') {
 					if (this.isRangeRowActive(row)) count += 1;
+					continue;
+				}
+				if (t === 'select' && Array.isArray(row.values)) {
+					if (row.values.length > 0) count += 1;
 					continue;
 				}
 				if (t === 'search' || t === 'swatch') {
@@ -1282,6 +1303,11 @@
 					});
 					if (key && values.length)
 						out.push({ type: 'checkbox', key, values, logic: logic === 'AND' ? 'AND' : 'OR' });
+				} else if (type === 'select') {
+					const key = el.getAttribute('data-filtron-key') || '';
+					const select = el.querySelector('.filtron-filter-select__input');
+					const value = select ? String(select.value || '') : '';
+					if (key && value) out.push({ type: 'select', key, values: [value], logic: 'OR' });
 				} else if (type === 'range') {
 					const key = el.getAttribute('data-filtron-key') || '';
 					const slug = el.getAttribute('data-filtron-url-slug') || '';
@@ -1400,6 +1426,7 @@
 				}
 				this.applyFacetCounts(fc);
 				this.updateSummary(count, activeSelections, executionMs);
+				this.state.loading = false;
 				this.updateLoadMoreState({ hasMore });
 				this.updatePaginationState({ hasMore, currentPage, totalPages });
 				this.updateDebugPanel(data);
@@ -1418,6 +1445,7 @@
 				if (e && e.name === 'AbortError') return;
 				this.updateDebugPanel(null);
 				grids.forEach((g) => g.classList.remove('filtron-skeleton'));
+				this.state.loading = false;
 				this.updateSummary(0, activeSelections, 0);
 				this.updateLoadMoreState({ hasMore: false });
 				this.updatePaginationState({ hasMore: false, currentPage: this.state.page, totalPages: this.state.page });
@@ -1455,11 +1483,19 @@
 				const inp = document.querySelector(
 					`input.filtron-filter-checkbox__input[data-filtron-key="${esc(key)}"][data-filtron-value="${esc(value)}"]`
 				);
-				if (!inp) continue;
-				const item = inp.closest('.filtron-filter-checkbox__item');
-				const cntEl = item && item.querySelector('.filtron-filter-checkbox__count');
-				if (cntEl) cntEl.textContent = '(' + String(count) + ')';
-				if (item) item.classList.toggle('filtron-option--dim', count === 0);
+				if (inp) {
+					const item = inp.closest('.filtron-filter-checkbox__item');
+					const cntEl = item && item.querySelector('.filtron-filter-checkbox__count');
+					if (cntEl) cntEl.textContent = '(' + String(count) + ')';
+					if (item) item.classList.toggle('filtron-option--dim', count === 0);
+				}
+
+				const opt = document.querySelector(
+					`select.filtron-filter-select__input[data-filtron-key="${esc(key)}"] option[value="${esc(value)}"]`
+				);
+				if (opt) {
+					opt.disabled = count === 0;
+				}
 			}
 		}
 	}
@@ -1485,6 +1521,13 @@
 				el.querySelectorAll('input.filtron-filter-checkbox__input[type="checkbox"]').forEach((inp) => {
 					inp.checked = set.has(String(inp.value));
 				});
+			} else if (type === 'checkbox') {
+				el.querySelectorAll('input.filtron-filter-checkbox__input[type="checkbox"]').forEach((inp) => {
+					inp.checked = false;
+				});
+			} else if (type === 'select') {
+				const select = el.querySelector('.filtron-filter-select__input');
+				if (select) select.value = row && row.values && row.values[0] != null ? String(row.values[0]) : '';
 			} else if (type === 'range' && row && row.min != null && row.max != null) {
 				const track = el.querySelector('.filtron-filter-range__track');
 				if (track && track.noUiSlider) {
@@ -1526,6 +1569,8 @@
 				for (const v of row.values) {
 					next.searchParams.append(`filtron[${String(row.key)}][]`, String(v));
 				}
+			} else if (t === 'select' && Array.isArray(row.values) && row.values[0]) {
+				next.searchParams.set(`filtron_${String(row.key)}`, String(row.values[0]));
 			} else if (t === 'range' && row.min != null && row.max != null) {
 				const slug = row.urlSlug || 'range';
 				next.searchParams.set(`filtron_${String(slug)}_min`, String(row.min));
@@ -1629,8 +1674,8 @@
 				if (fk && val) {
 					const vals = val.split(',').map((s) => s.trim()).filter(Boolean);
 					if (vals.length) {
-						out[rowId({ type: 'checkbox', key: fk })] = {
-							type: 'checkbox',
+						out[rowId({ type: 'select', key: fk })] = {
+							type: 'select',
 							key: fk,
 							values: vals,
 							logic: 'OR',

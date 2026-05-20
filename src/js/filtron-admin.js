@@ -70,6 +70,9 @@
 		if (t === 'checkbox') {
 			return { logic: 'OR', show_count: true };
 		}
+		if (t === 'select') {
+			return { placeholder: 'Any', show_count: true };
+		}
 		if (t === 'range') {
 			return { prefix: '', suffix: '', step: 1 };
 		}
@@ -120,6 +123,32 @@
 				step +
 				')</div>' +
 				'<div class="filtron-preview-track">[ ————●———— ]</div>' +
+				'</div>'
+			);
+		}
+
+		if (t === 'select') {
+			const placeholder = escapeHtml(String(c.placeholder || 'Any'));
+			const sc = c.show_count !== false;
+			return (
+				'<div class="filtron-preview-mock filtron-preview-mock--select">' +
+				'<label class="filtron-preview-title">' +
+				label +
+				'</label>' +
+				'<select class="widefat" disabled>' +
+				'<option>' +
+				placeholder +
+				'</option>' +
+				'<option>Blue' +
+				(sc ? ' (12)' : '') +
+				'</option>' +
+				'<option>Red' +
+				(sc ? ' (8)' : '') +
+				'</option>' +
+				'</select>' +
+				'<div class="filtron-preview-meta">Show count: ' +
+				(sc ? 'On' : 'Off') +
+				'</div>' +
 				'</div>'
 			);
 		}
@@ -333,6 +362,17 @@
 				if (pre) pre.value = String(c.prefix ?? '');
 				if (suf) suf.value = String(c.suffix ?? '');
 				if (step) step.value = String(c.step ?? 1);
+			} else if (t === 'select') {
+				const show = c.show_count !== false;
+				this.typeFields.innerHTML =
+					'<fieldset><legend>Select options</legend>' +
+					'<p><label for="filtron-cfg-placeholder">Placeholder</label><input type="text" class="widefat" id="filtron-cfg-placeholder" placeholder="Any" /></p>' +
+					'<p><label><input type="checkbox" id="filtron-cfg-show-count" /> Show count</label></p>' +
+					'</fieldset>';
+				const placeholderEl = document.getElementById('filtron-cfg-placeholder');
+				const showEl = document.getElementById('filtron-cfg-show-count');
+				if (placeholderEl) placeholderEl.value = String(c.placeholder ?? 'Any');
+				if (showEl) showEl.checked = show;
 			} else if (t === 'swatch') {
 				const pro = cfg().isPro;
 				const badge =
@@ -367,6 +407,11 @@
 				base.prefix = pre ? pre.value : '';
 				base.suffix = suf ? suf.value : '';
 				base.step = step ? parseFloat(step.value, 10) || 1 : 1;
+			} else if (t === 'select') {
+				const placeholderEl = document.getElementById('filtron-cfg-placeholder');
+				const showEl = document.getElementById('filtron-cfg-show-count');
+				base.placeholder = placeholderEl ? placeholderEl.value.trim() : 'Any';
+				base.show_count = !!(showEl && showEl.checked);
 			}
 
 			this.selected.config = base;
@@ -381,11 +426,16 @@
 			const typeEl = document.getElementById('filtron-field-type');
 			const stEl = document.getElementById('filtron-field-source-type');
 			const skEl = document.getElementById('filtron-field-source-key');
+			const prevType = item.filter_type || 'checkbox';
+			const nextType = typeEl ? typeEl.value : 'checkbox';
 			item.label = labelEl ? labelEl.value.trim() : '';
-			item.filter_type = typeEl ? typeEl.value : 'checkbox';
+			item.filter_type = nextType;
 			item.source_type = stEl ? stEl.value : 'taxonomy';
 			item.source_key = skEl ? skEl.value.trim() : '';
-			if (!item.config) item.config = defaultConfigForType(item);
+			if (!item.config || prevType !== nextType) {
+				item.config = defaultConfigForType(item);
+				return;
+			}
 			this.syncConfigFromTypeFields();
 		}
 
@@ -421,8 +471,6 @@
 				typeMain.addEventListener('change', () => {
 					if (!this.selected) return;
 					this.readFormIntoItem(this.selected);
-					this.selected.filter_type = typeMain.value;
-					if (!this.selected.config) this.selected.config = defaultConfigForType(this.selected);
 					this.renderTypeFields(this.selected);
 					this.updatePreview();
 				});

@@ -528,14 +528,24 @@ class Filtron_Gutenberg {
 	/**
 	 * @param array<string, mixed> $attributes Block attrs.
 	 * @param string               $content   Inner blocks HTML.
-	 * @param WP_Block             $block     Block instance.
+	 * @param WP_Block|null        $block     Block instance.
 	 */
-	public static function render_container( array $attributes, string $content, WP_Block $block ): string {
+	public static function render_container( array $attributes, string $content, ?WP_Block $block = null ): string {
 		unset( $block );
 		$gid = isset( $attributes['groupId'] ) ? (int) $attributes['groupId'] : 0;
 
 		$align = ! empty( $attributes['align'] ) ? ' align' . sanitize_key( (string) $attributes['align'] ) : '';
 		$post_type = self::get_post_type_for_group( $gid );
+		$per_page = isset( $attributes['perPage'] ) ? max( 1, min( 100, (int) $attributes['perPage'] ) ) : 6;
+		$orderby = isset( $attributes['orderby'] ) ? sanitize_key( (string) $attributes['orderby'] ) : 'date';
+		if ( ! in_array( $orderby, array( 'date', 'title', 'price' ), true ) ) {
+			$orderby = 'date';
+		}
+		$order = isset( $attributes['order'] ) ? strtoupper( sanitize_key( (string) $attributes['order'] ) ) : 'DESC';
+		$order = 'ASC' === $order ? 'ASC' : 'DESC';
+		$view = isset( $attributes['view'] ) ? sanitize_key( (string) $attributes['view'] ) : 'grid';
+		$view = 'list' === $view ? 'list' : 'grid';
+		$sort_value = $orderby . ':' . $order;
 		$results_id = 'filtron-results-' . wp_generate_uuid4();
 		$toolbar_id = 'filtron-toolbar-' . wp_generate_uuid4();
 		$load_more_id = 'filtron-load-more-' . wp_generate_uuid4();
@@ -569,9 +579,10 @@ class Filtron_Gutenberg {
 		$html .= ' data-filtron-group="1"';
 		$html .= ' data-filtron-group-id="' . esc_attr( (string) $gid ) . '"';
 		$html .= ' data-filtron-post-type="' . esc_attr( $post_type ) . '"';
-		$html .= ' data-filtron-per-page="6"';
-		$html .= ' data-filtron-orderby="date"';
-		$html .= ' data-filtron-order="DESC"';
+		$html .= ' data-filtron-per-page="' . esc_attr( (string) $per_page ) . '"';
+		$html .= ' data-filtron-orderby="' . esc_attr( $orderby ) . '"';
+		$html .= ' data-filtron-order="' . esc_attr( $order ) . '"';
+		$html .= ' data-filtron-view="' . esc_attr( $view ) . '"';
 		$html .= ' data-filtron-grid="#' . esc_attr( $results_id ) . '"';
 		foreach ( self::get_container_theme_token_attributes( $attributes, $gid ) as $token_attr => $token_value ) {
 			$html .= ' ' . esc_attr( $token_attr ) . '="' . esc_attr( $token_value ) . '"';
@@ -619,18 +630,18 @@ class Filtron_Gutenberg {
 		$html .= '<p class="filtron-widget__result-meta"><span class="filtron-summary__result-count">0</span> ' . esc_html( $found_text ) . '</p>';
 		$html .= '<div id="' . esc_attr( $toolbar_id ) . '" class="filtron-toolbar" data-filtron-toolbar="1" role="toolbar" aria-label="' . esc_attr( $toolbar_aria ) . '">';
 		$html .= '<div class="filtron-toolbar__views" role="group" aria-label="' . esc_attr( $layout_group_aria ) . '">';
-		$html .= '<button type="button" class="filtron-toolbar__btn is-active" data-filtron-view="grid" aria-pressed="true" aria-label="' . esc_attr( $view_grid_label ) . '">▦</button>';
-		$html .= '<button type="button" class="filtron-toolbar__btn" data-filtron-view="list" aria-pressed="false" aria-label="' . esc_attr( $view_list_label ) . '">☰</button>';
+		$html .= '<button type="button" class="filtron-toolbar__btn' . ( 'grid' === $view ? ' is-active' : '' ) . '" data-filtron-view="grid" aria-pressed="' . ( 'grid' === $view ? 'true' : 'false' ) . '" aria-label="' . esc_attr( $view_grid_label ) . '">&#9638;</button>';
+		$html .= '<button type="button" class="filtron-toolbar__btn' . ( 'list' === $view ? ' is-active' : '' ) . '" data-filtron-view="list" aria-pressed="' . ( 'list' === $view ? 'true' : 'false' ) . '" aria-label="' . esc_attr( $view_list_label ) . '">&#9776;</button>';
 		$html .= '</div>';
 		$html .= '<label class="filtron-toolbar__sort" for="' . esc_attr( $sort_field_id ) . '"><span class="screen-reader-text">' . esc_html( $sort_label ) . '</span>';
 		$html .= '<select id="' . esc_attr( $sort_field_id ) . '" class="filtron-toolbar__select" data-filtron-sort="1" aria-label="' . esc_attr( $sort_label ) . '">';
-		$html .= '<option value="date:DESC">' . esc_html__( 'Newest', 'filtron' ) . '</option>';
-		$html .= '<option value="title:ASC">' . esc_html__( 'Title (A-Z)', 'filtron' ) . '</option>';
-		$html .= '<option value="price:ASC">' . esc_html__( 'Price: low to high', 'filtron' ) . '</option>';
-		$html .= '<option value="price:DESC">' . esc_html__( 'Price: high to low', 'filtron' ) . '</option>';
+		$html .= '<option value="date:DESC"' . selected( $sort_value, 'date:DESC', false ) . '>' . esc_html__( 'Newest', 'filtron' ) . '</option>';
+		$html .= '<option value="title:ASC"' . selected( $sort_value, 'title:ASC', false ) . '>' . esc_html__( 'Title (A-Z)', 'filtron' ) . '</option>';
+		$html .= '<option value="price:ASC"' . selected( $sort_value, 'price:ASC', false ) . '>' . esc_html__( 'Price: low to high', 'filtron' ) . '</option>';
+		$html .= '<option value="price:DESC"' . selected( $sort_value, 'price:DESC', false ) . '>' . esc_html__( 'Price: high to low', 'filtron' ) . '</option>';
 		$html .= '</select></label>';
 		$html .= '</div>';
-		$html .= '<div id="' . esc_attr( $results_id ) . '" class="filtron-results filtron-results--default"></div>';
+		$html .= '<div id="' . esc_attr( $results_id ) . '" class="filtron-results filtron-results--default' . ( 'list' === $view ? ' filtron-results--list' : '' ) . '"></div>';
 		$html .= '<nav class="filtron-pagination" data-filtron-pagination="1" aria-label="' . esc_attr__( 'Results pagination', 'filtron' ) . '">';
 		$html .= '<button type="button" class="filtron-pagination__btn" data-filtron-page-prev="1" aria-label="' . esc_attr( $page_prev_aria ) . '">' . esc_html( $page_prev_text ) . '</button>';
 		$html .= '<span class="filtron-pagination__label" data-filtron-page-label="1" aria-live="polite">' . esc_html( $page_label_text ) . '</span>';
