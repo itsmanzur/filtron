@@ -207,6 +207,8 @@
 			this.items = Array.isArray(initial) ? initial.slice() : [];
 			/** @type {FiltronFilterItem|null} */
 			this.selected = null;
+			/** @type {number|null} */
+			this.pendingDeleteId = null;
 			/** @type {Sortable|null} */
 			this.sortable = null;
 			this.groupId = String((cfg().groupId != null ? cfg().groupId : this.root && this.root.dataset.groupId) || '0');
@@ -229,24 +231,58 @@
 		renderList() {
 			this.listEl.innerHTML = '';
 			this.items.forEach((item) => {
+				const active = item.is_active !== 0;
+				const i18n = cfg().i18n || {};
+				const pendingDelete = this.pendingDeleteId === item.id;
 				const li = document.createElement('li');
 				li.className = 'filtron-filter-item';
+				if (pendingDelete) {
+					li.classList.add('is-delete-pending');
+				}
+				if (!active) {
+					li.classList.add('is-inactive');
+				}
 				li.dataset.itemId = String(item.id);
 				if (this.selected && this.selected.id === item.id) {
 					li.classList.add('is-active');
 				}
 				li.innerHTML =
 					'<span class="filtron-drag-handle" title="Drag" aria-hidden="true">⋮⋮</span>' +
-					'<span class="filtron-filter-item__label">' +
+					'<span class="filtron-filter-item__main"><span class="filtron-filter-item__label">' +
 					escapeHtml(item.label) +
 					'</span>' +
 					'<span class="filtron-filter-item__type">' +
 					escapeHtml(item.filter_type) +
+					'</span>' +
+					'<span class="filtron-filter-item__status">' +
+					(active ? 'Active' : 'Inactive') +
+					'</span></span>' +
+					'<span class="filtron-filter-item__actions">' +
+					'<button type="button" class="button-link filtron-filter-item__action" data-filtron-toggle-active="1">' +
+					escapeHtml(active ? i18n.deactivate || 'Deactivate' : i18n.activate || 'Activate') +
+					'</button>' +
+					'<button type="button" class="button-link button-link-delete filtron-filter-item__action" data-filtron-delete-filter="1">' +
+					escapeHtml(pendingDelete ? i18n.confirmDelete || 'Confirm delete' : i18n.delete || 'Delete') +
+					'</button>' +
 					'</span>';
 				li.addEventListener('click', (e) => {
-					if ((e.target && /** @type {HTMLElement} */ (e.target).closest('.filtron-drag-handle'))) return;
+					if ((e.target && /** @type {HTMLElement} */ (e.target).closest('.filtron-drag-handle, .filtron-filter-item__action'))) return;
 					this.selectItem(item.id);
 				});
+				const toggle = li.querySelector('[data-filtron-toggle-active]');
+				if (toggle) {
+					toggle.addEventListener('click', (e) => {
+						e.preventDefault();
+						this.toggleItemActive(item.id);
+					});
+				}
+				const del = li.querySelector('[data-filtron-delete-filter]');
+				if (del) {
+					del.addEventListener('click', (e) => {
+						e.preventDefault();
+						this.deleteItem(item.id);
+					});
+				}
 				this.listEl.appendChild(li);
 			});
 			this.refreshSortable();
@@ -321,11 +357,13 @@
 			const typeEl = document.getElementById('filtron-field-type');
 			const stEl = document.getElementById('filtron-field-source-type');
 			const skEl = document.getElementById('filtron-field-source-key');
+			const activeEl = document.getElementById('filtron-field-active');
 			if (idEl) idEl.value = String(item.id);
 			if (labelEl) labelEl.value = item.label || '';
 			if (typeEl) typeEl.value = item.filter_type || 'checkbox';
 			if (stEl) stEl.value = item.source_type || 'taxonomy';
 			if (skEl) skEl.value = item.source_key || '';
+			if (activeEl) activeEl.checked = item.is_active !== 0;
 		}
 
 		/**
@@ -426,12 +464,14 @@
 			const typeEl = document.getElementById('filtron-field-type');
 			const stEl = document.getElementById('filtron-field-source-type');
 			const skEl = document.getElementById('filtron-field-source-key');
+			const activeEl = document.getElementById('filtron-field-active');
 			const prevType = item.filter_type || 'checkbox';
 			const nextType = typeEl ? typeEl.value : 'checkbox';
 			item.label = labelEl ? labelEl.value.trim() : '';
 			item.filter_type = nextType;
 			item.source_type = stEl ? stEl.value : 'taxonomy';
 			item.source_key = skEl ? skEl.value.trim() : '';
+			item.is_active = activeEl && activeEl.checked ? 1 : 0;
 			if (!item.config || prevType !== nextType) {
 				item.config = defaultConfigForType(item);
 				return;
@@ -476,7 +516,7 @@
 				});
 			}
 
-			['filtron-field-label', 'filtron-field-source-type', 'filtron-field-source-key'].forEach((id) => {
+			['filtron-field-label', 'filtron-field-source-type', 'filtron-field-source-key', 'filtron-field-active'].forEach((id) => {
 				const el = document.getElementById(id);
 				if (el) {
 					el.addEventListener('input', () => {
@@ -586,6 +626,100 @@
 					toast((cfg().i18n && cfg().i18n.saved) || 'Saved', false);
 				}
 			} catch (e) {
+				toast(e.message, true);
+			}
+		}
+
+		clearEditor() {
+			this.selected = null;
+			if (this.editorEl) this.editorEl.hidden = true;
+			if (this.previewEl) this.previewEl.innerHTML = '';
+			const idEl = document.getElementById('filtron-item-id');
+			if (idEl) idEl.value = '';
+		}
+
+		/**
+		 * @param {FiltronFilterItem} item
+		 * @returns {Record<string, unknown>}
+		 */
+		buildSavePayload(item) {
+			return {
+				id: item.id,
+				group_id: item.group_id,
+				label: item.label,
+				filter_type: item.filter_type,
+				source_type: item.source_type,
+				source_key: item.source_key,
+				config: item.config || {},
+				is_active: item.is_active,
+			};
+		}
+
+		/**
+		 * @param {number} id
+		 */
+		async toggleItemActive(id) {
+			const item = this.items.find((x) => x.id === id);
+			if (!item) return;
+			this.pendingDeleteId = null;
+			const previous = item.is_active !== 0 ? 1 : 0;
+			item.is_active = previous ? 0 : 1;
+
+			try {
+				const data = await postAjax('filtron_save_filter', {
+					group_id: this.groupId,
+					filter: JSON.stringify(this.buildSavePayload(item)),
+				});
+				const saved = data.filter;
+				if (saved) {
+					const idx = this.items.findIndex((x) => x.id === saved.id);
+					if (idx >= 0) this.items[idx] = saved;
+					if (this.selected && this.selected.id === saved.id) {
+						this.selected = saved;
+						this.populateForm(saved);
+						this.renderTypeFields(saved);
+						this.updatePreview();
+					}
+					this.renderList();
+					toast((cfg().i18n && cfg().i18n.saved) || 'Saved', false);
+				}
+			} catch (e) {
+				item.is_active = previous;
+				this.renderList();
+				toast(e.message, true);
+			}
+		}
+
+		/**
+		 * @param {number} id
+		 */
+		async deleteItem(id) {
+			const item = this.items.find((x) => x.id === id);
+			if (!item) return;
+
+			const i18n = cfg().i18n || {};
+			if (this.pendingDeleteId !== id) {
+				this.pendingDeleteId = id;
+				this.renderList();
+				return;
+			}
+
+			try {
+				await postAjax('filtron_delete_filter', {
+					group_id: this.groupId,
+					item_id: String(id),
+				});
+				this.pendingDeleteId = null;
+				this.items = this.items.filter((x) => x.id !== id);
+				if (this.selected && this.selected.id === id) {
+					this.clearEditor();
+				}
+				this.renderList();
+				this.updateEmptyState();
+				toast(i18n.deleted || 'Filter deleted.', false);
+			} catch (e) {
+				this.pendingDeleteId = null;
+				this.renderList();
 				toast(e.message, true);
 			}
 		}

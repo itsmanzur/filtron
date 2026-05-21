@@ -39,6 +39,7 @@ class Filtron_Admin {
 
 		add_action( 'wp_ajax_filtron_save_filter', array( self::class, 'ajax_save_filter' ) );
 		add_action( 'wp_ajax_filtron_reorder_filters', array( self::class, 'ajax_reorder_filters' ) );
+		add_action( 'wp_ajax_filtron_delete_filter', array( self::class, 'ajax_delete_filter' ) );
 	}
 
 	/**
@@ -463,6 +464,12 @@ class Filtron_Admin {
 							<p>
 								<label for="filtron-field-source-key"><?php esc_html_e( 'Source key', 'filtron' ); ?></label>
 								<input type="text" class="widefat" id="filtron-field-source-key" name="source_key" placeholder="pa_color / _price" autocomplete="off" />
+							</p>
+							<p>
+								<label>
+									<input type="checkbox" id="filtron-field-active" name="is_active" value="1" />
+									<?php esc_html_e( 'Active on storefront', 'filtron' ); ?>
+								</label>
 							</p>
 
 							<div id="filtron-type-fields" class="filtron-type-fields"></div>
@@ -1081,8 +1088,13 @@ class Filtron_Admin {
 				'items'    => $items,
 				'i18n'     => array(
 					'saved'       => __( 'Filter saved.', 'filtron' ),
+					'deleted'     => __( 'Filter deleted.', 'filtron' ),
 					'reordered'   => __( 'Order updated.', 'filtron' ),
 					'error'       => __( 'Something went wrong.', 'filtron' ),
+					'activate'    => __( 'Activate', 'filtron' ),
+					'deactivate'  => __( 'Deactivate', 'filtron' ),
+					'delete'      => __( 'Delete', 'filtron' ),
+					'confirmDelete' => __( 'Confirm delete', 'filtron' ),
 					'proBadge'    => __( 'Pro feature', 'filtron' ),
 					'proDisabled' => __( 'Activate Filtron Pro to use swatch filters.', 'filtron' ),
 				),
@@ -1244,6 +1256,48 @@ class Filtron_Admin {
 		}
 
 		wp_send_json_success( array( 'ok' => true ) );
+	}
+
+	/**
+	 * AJAX: delete one filter row from a group.
+	 */
+	public static function ajax_delete_filter(): void {
+		check_ajax_referer( self::NONCE_ACTION, 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Forbidden.', 'filtron' ) ), 403 );
+			return;
+		}
+
+		$group_id = isset( $_POST['group_id'] ) ? absint( $_POST['group_id'] ) : 0;
+		$item_id  = isset( $_POST['item_id'] ) ? absint( $_POST['item_id'] ) : 0;
+		if ( $group_id < 1 || $item_id < 1 || ! self::group_exists( $group_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid filter.', 'filtron' ) ), 400 );
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'filtron_items';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$deleted = $wpdb->delete(
+			$table,
+			array(
+				'id'       => $item_id,
+				'group_id' => $group_id,
+			),
+			array( '%d', '%d' )
+		);
+
+		if ( false === $deleted ) {
+			wp_send_json_error( array( 'message' => __( 'Could not delete.', 'filtron' ) ), 500 );
+			return;
+		}
+		if ( $deleted < 1 ) {
+			wp_send_json_error( array( 'message' => __( 'Filter not found.', 'filtron' ) ), 404 );
+			return;
+		}
+
+		wp_send_json_success( array( 'deleted' => true ) );
 	}
 
 	/**
