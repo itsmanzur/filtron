@@ -43,6 +43,18 @@
 	min-width: 0;
 }
 
+.filtron-widget__admin-empty {
+	margin: 0 0 14px;
+	padding: 10px 12px;
+	border: 1px solid #fde68a;
+	border-left: 4px solid #d97706;
+	border-radius: 8px;
+	background: #fffbeb;
+	color: #78350f;
+	font-size: 13px;
+	line-height: 1.45;
+}
+
 .filtron-filter-checkbox,
 .filtron-filter-range,
 .filtron-filter-search,

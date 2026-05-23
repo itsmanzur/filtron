@@ -621,6 +621,9 @@ class Filtron_Gutenberg {
 			$html .= '</button></div>';
 		}
 		$html .= '<div class="filtron-widget__main">';
+		if ( ! $has_sidebar_content && $gid > 0 && is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+			$html .= '<p class="filtron-widget__admin-empty" role="status">' . esc_html__( 'No active filters in this Filtron group. Add or activate filters in the group editor to show storefront controls.', 'filtron' ) . '</p>';
+		}
 		$html .= '<div class="filtron-active-chips" data-filtron-chips-inner="1"></div>';
 		$html .= '<div class="filtron-summary">';
 		$html .= '<div class="filtron-summary__item"><span class="filtron-summary__value filtron-summary__value--count">0</span><span class="filtron-summary__label">' . esc_html( $result_label ) . '</span></div>';
