@@ -171,6 +171,13 @@ class Filtron_Gutenberg {
 				'render_callback' => array( self::class, 'render_search' ),
 			)
 		);
+
+		register_block_type_from_metadata(
+			$dir . 'select',
+			array(
+				'render_callback' => array( self::class, 'render_select' ),
+			)
+		);
 	}
 
 	/**
@@ -846,6 +853,38 @@ class Filtron_Gutenberg {
 		);
 
 		$filter = new Filtron_Filter_Search( $config );
+		return $filter->render();
+	}
+
+	/**
+	 * @param array<string, mixed> $attributes Block attrs.
+	 */
+	public static function render_select( array $attributes ): string {
+		$key = isset( $attributes['sourceKey'] ) ? sanitize_key( (string) $attributes['sourceKey'] ) : '';
+		if ( '' === $key ) {
+			return '';
+		}
+
+		$st = isset( $attributes['sourceType'] ) ? sanitize_key( (string) $attributes['sourceType'] ) : 'taxonomy';
+		if ( ! Filtron_Security::validate_source_type( $st ) ) {
+			$st = 'taxonomy';
+		}
+
+		$show_count = true;
+		if ( array_key_exists( 'showCount', $attributes ) ) {
+			$show_count = (bool) $attributes['showCount'];
+		}
+
+		$config = array(
+			'label'       => isset( $attributes['label'] ) ? sanitize_text_field( (string) $attributes['label'] ) : '',
+			'source_key'  => $key,
+			'key'         => $key,
+			'source_type' => $st,
+			'show_count'  => $show_count,
+			'placeholder' => isset( $attributes['placeholder'] ) ? sanitize_text_field( (string) $attributes['placeholder'] ) : '',
+		);
+
+		$filter = new Filtron_Filter_Select( $config );
 		return $filter->render();
 	}
 }

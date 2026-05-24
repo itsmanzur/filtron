@@ -86,10 +86,10 @@
 	}
 
 	/**
-	 * Inspector for checkbox / range / search.
+	 * Inspector for checkbox / range / search / select.
 	 *
 	 * @param {Object} props          Block props.
-	 * @param {string} props.filterType checkbox|range|search
+	 * @param {string} props.filterType checkbox|range|search|select
 	 */
 	function FiltronFilterInspector( props ) {
 		var attributes = props.attributes;
@@ -190,29 +190,35 @@
 				el( ToggleControl, {
 					label: __( 'Show counts', 'filtron' ),
 					help:
-						filterType === 'checkbox'
+						filterType === 'checkbox' || filterType === 'select'
 							? ''
-							: __( 'Reserved for checkbox filters; no effect on this block yet.', 'filtron' ),
+							: __( 'Reserved for checkbox and select filters; no effect on this block yet.', 'filtron' ),
 					checked: !! attributes.showCount,
 					onChange: function ( v ) {
 						setAttributes( { showCount: v } );
 					},
 				} ),
-				el( SelectControl, {
-					label: __( 'Logic', 'filtron' ),
-					help:
-						filterType === 'checkbox'
-							? ''
-							: __( 'Reserved; only checkbox filters use AND/OR.', 'filtron' ),
-					value: attributes.logic === 'AND' ? 'AND' : 'OR',
-					options: [
-						{ label: __( 'OR (any)', 'filtron' ), value: 'OR' },
-						{ label: __( 'AND (all)', 'filtron' ), value: 'AND' },
-					],
-					onChange: function ( v ) {
-						setAttributes( { logic: v } );
-					},
-				} )
+				filterType === 'select' &&
+					el( TextControl, {
+						label: __( 'Placeholder', 'filtron' ),
+						value: attributes.placeholder || '',
+						placeholder: __( 'Any', 'filtron' ),
+						onChange: function ( v ) {
+							setAttributes( { placeholder: v } );
+						},
+					} ),
+				filterType === 'checkbox' &&
+					el( SelectControl, {
+						label: __( 'Logic', 'filtron' ),
+						value: attributes.logic === 'AND' ? 'AND' : 'OR',
+						options: [
+							{ label: __( 'OR (any)', 'filtron' ), value: 'OR' },
+							{ label: __( 'AND (all)', 'filtron' ), value: 'AND' },
+						],
+						onChange: function ( v ) {
+							setAttributes( { logic: v } );
+						},
+					} )
 			)
 		);
 	}
@@ -347,11 +353,133 @@
 	}
 
 	/**
-	 * In-canvas preview (styled like the storefront widget; checkbox uses live index data).
+	 * Select preview: load distinct values from Filtron index (REST).
+	 *
+	 * @param {Object} p Block props subset + blockProps + titleFallback.
+	 */
+	function FiltronSelectFacetPreview( p ) {
+		var attributes = p.attributes;
+		var blockProps = p.blockProps;
+		var titleFallback = p.titleFallback;
+		var clientId = p.clientId;
+
+		var postType = resolveGroupPostType( clientId );
+
+		var facetState = useState( { status: 'loading', items: [] } );
+		var facet = facetState[ 0 ];
+		var setFacet = facetState[ 1 ];
+
+		useEffect(
+			function () {
+				if ( ! attributes.sourceKey || ! attributes.sourceType ) {
+					setFacet( { status: 'empty', items: [] } );
+					return;
+				}
+				setFacet( { status: 'loading', items: [] } );
+				var path =
+					'/filtron/v1/editor-facet-preview?post_type=' +
+					encodeURIComponent( postType ) +
+					'&source_type=' +
+					encodeURIComponent( attributes.sourceType ) +
+					'&source_key=' +
+					encodeURIComponent( attributes.sourceKey ) +
+					'&limit=30';
+				var cancelled = false;
+				apiFetch( { path: path } )
+					.then( function ( res ) {
+						if ( cancelled ) {
+							return;
+						}
+						var items = res && res.items ? res.items : [];
+						setFacet( {
+							status: items.length ? 'ready' : 'empty',
+							items: items,
+						} );
+					} )
+					.catch( function () {
+						if ( cancelled ) {
+							return;
+						}
+						setFacet( { status: 'error', items: [] } );
+					} );
+				return function () {
+					cancelled = true;
+				};
+			},
+			[ postType, attributes.sourceType, attributes.sourceKey ]
+		);
+
+		var label = attributes.label || titleFallback;
+		var sourceRow = el(
+			'div',
+			{ className: 'filtron-editor-preview__source' },
+			el( 'span', { className: 'filtron-editor-preview__tag' }, attributes.sourceType ),
+			' ',
+			attributes.sourceKey
+		);
+
+		var selectContent;
+		if ( facet.status === 'loading' ) {
+			selectContent = el(
+				'p',
+				{ className: 'filtron-editor-preview__hint' },
+				__( 'Loading options...', 'filtron' )
+			);
+		} else if ( facet.status === 'error' ) {
+			selectContent = el(
+				'p',
+				{ className: 'filtron-editor-preview__hint' },
+				__( 'Could not load preview values.', 'filtron' )
+			);
+		} else if ( facet.status === 'empty' || ! facet.items.length ) {
+			selectContent = el(
+				'p',
+				{ className: 'filtron-editor-preview__hint' },
+				__( 'No indexed values for this key yet. Rebuild the Filtron index if you expect data here.', 'filtron' )
+			);
+		} else {
+			selectContent = el(
+				'select',
+				{
+					className: 'filtron-editor-preview__select',
+					disabled: true,
+					'aria-label': __( 'Select field preview', 'filtron' ),
+				},
+				el( 'option', { value: '' }, attributes.placeholder || __( 'Any', 'filtron' ) ),
+				facet.items.map( function ( row, i ) {
+					var optionLabel = row.label || row.value;
+					if ( attributes.showCount && typeof row.count !== 'undefined' ) {
+						optionLabel += ' (' + row.count + ')';
+					}
+					return el( 'option', { key: 's' + i, value: row.value }, optionLabel );
+				} )
+			);
+		}
+
+		return el(
+			'div',
+			blockProps,
+			el(
+				'div',
+				{ className: 'filtron-editor-preview filtron-editor-preview--select' },
+				el(
+					'div',
+					{ className: 'filtron-editor-preview__head' },
+					el( 'span', { className: 'filtron-editor-preview__title' }, label ),
+					el( 'span', { className: 'filtron-editor-preview__badge' }, __( 'Select', 'filtron' ) )
+				),
+				selectContent,
+				sourceRow
+			)
+		);
+	}
+
+	/**
+	 * In-canvas preview (styled like the storefront widget; checkbox/select use live index data).
 	 *
 	 * @param {Object} props          Block props.
 	 * @param {string} titleFallback Default title when label empty.
-	 * @param {string} filterType    checkbox|range|search
+	 * @param {string} filterType    checkbox|range|search|select
 	 */
 	function filtronFilterPreview( props, titleFallback, filterType ) {
 		var attributes = props.attributes;
@@ -438,6 +566,15 @@
 			);
 		}
 
+		if ( filterType === 'select' ) {
+			return el( FiltronSelectFacetPreview, {
+				attributes: attributes,
+				blockProps: blockProps,
+				titleFallback: titleFallback,
+				clientId: props.clientId,
+			} );
+		}
+
 		/* checkbox (default): live facet values from index */
 		return el( FiltronCheckboxFacetPreview, {
 			attributes: attributes,
@@ -512,7 +649,7 @@
 							__( 'Select a filter group from the block sidebar to activate this container.', 'filtron' )
 						),
 					el( InnerBlocks, {
-						allowedBlocks: [ 'filtron/checkbox', 'filtron/range', 'filtron/search' ],
+						allowedBlocks: [ 'filtron/checkbox', 'filtron/range', 'filtron/search', 'filtron/select' ],
 						renderAppender:
 							InnerBlocks.ButtonBlockAppender || InnerBlocks.DefaultBlockAppender,
 					} )
@@ -559,6 +696,20 @@
 				null,
 				el( FiltronFilterInspector, Object.assign( {}, props, { filterType: 'search' } ) ),
 				filtronFilterPreview( props, __( 'Search filter', 'filtron' ), 'search' )
+			);
+		},
+		save: function () {
+			return null;
+		},
+	} );
+
+	registerBlockType( 'filtron/select', {
+		edit: function ( props ) {
+			return el(
+				Fragment,
+				null,
+				el( FiltronFilterInspector, Object.assign( {}, props, { filterType: 'select' } ) ),
+				filtronFilterPreview( props, __( 'Select filter', 'filtron' ), 'select' )
 			);
 		},
 		save: function () {

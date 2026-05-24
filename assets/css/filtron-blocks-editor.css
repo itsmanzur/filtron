@@ -138,6 +138,19 @@
 	pointer-events: none;
 }
 
+/* Select */
+.filtron-editor-preview--select .filtron-editor-preview__select {
+	width: 100%;
+	margin-top: 6px;
+	padding: 8px 10px;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	font-size: 13px;
+	background: #fff;
+	color: #334155;
+	pointer-events: none;
+}
+
 .filtron-editor-preview--container-bar {
 	display: flex;
 	align-items: center;
