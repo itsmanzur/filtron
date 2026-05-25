@@ -411,7 +411,7 @@ class Filtron_Gutenberg {
 				}
 				$items[] = array(
 					'value' => (string) $term->slug,
-					'label' => (string) $term->name,
+					'label' => Filtron_Filter_Base::normalize_display_text( (string) $term->name ),
 					'count' => (int) $term->count,
 				);
 			}
@@ -438,7 +438,7 @@ class Filtron_Gutenberg {
 			}
 			$items[] = array(
 				'value' => $slug,
-				'label' => $label,
+				'label' => Filtron_Filter_Base::normalize_display_text( $label ),
 				'count' => $count,
 			);
 		}
@@ -489,17 +489,17 @@ class Filtron_Gutenberg {
 			)
 		);
 		if ( ! is_wp_error( $terms ) && is_array( $terms ) && isset( $terms[0] ) && $terms[0] instanceof WP_Term ) {
-			return (string) $terms[0]->name;
+			return Filtron_Filter_Base::normalize_display_text( (string) $terms[0]->name );
 		}
 
 		if ( ctype_digit( $stored ) ) {
 			$t = get_term( (int) $stored, $taxonomy );
 			if ( $t instanceof WP_Term && ! is_wp_error( $t ) ) {
-				return (string) $t->name;
+				return Filtron_Filter_Base::normalize_display_text( (string) $t->name );
 			}
 		}
 
-		return self::humanize_facet_slug( $stored );
+		return Filtron_Filter_Base::normalize_display_text( self::humanize_facet_slug( $stored ) );
 	}
 
 	/**

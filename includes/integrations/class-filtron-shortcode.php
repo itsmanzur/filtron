@@ -20,6 +20,19 @@ class Filtron_Shortcode {
 	public static function register(): void {
 		add_shortcode( 'filtron_group', array( self::class, 'render_group' ) );
 		add_shortcode( 'filtron', array( self::class, 'render_group' ) );
+		add_filter( 'the_content', array( self::class, 'repair_rendered_content' ), 999 );
+	}
+
+	/**
+	 * Repair entity-encoded mojibake introduced by late content filters.
+	 *
+	 * @param string $content Rendered post content.
+	 */
+	public static function repair_rendered_content( string $content ): string {
+		if ( false === strpos( $content, 'filtron-' ) || false === strpos( $content, '&' ) ) {
+			return $content;
+		}
+		return Filtron_Filter_Base::repair_mojibake_entities_in_html( $content );
 	}
 
 	/**

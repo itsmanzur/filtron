@@ -1135,7 +1135,7 @@ class Filtron_Admin {
 		$filter_type  = isset( $filter['filter_type'] ) ? sanitize_key( (string) $filter['filter_type'] ) : '';
 		$source_type  = isset( $filter['source_type'] ) ? sanitize_key( (string) $filter['source_type'] ) : 'taxonomy';
 		$source_key   = isset( $filter['source_key'] ) ? sanitize_text_field( (string) $filter['source_key'] ) : '';
-		$label        = isset( $filter['label'] ) ? sanitize_text_field( (string) $filter['label'] ) : '';
+		$label        = isset( $filter['label'] ) ? Filtron_Filter_Base::normalize_display_text( sanitize_text_field( (string) $filter['label'] ) ) : '';
 		$is_active    = isset( $filter['is_active'] ) ? (int) (bool) $filter['is_active'] : 1;
 		$config       = isset( $filter['config'] ) && is_array( $filter['config'] ) ? self::sanitize_config( $filter['config'] ) : array();
 
@@ -1314,13 +1314,13 @@ class Filtron_Admin {
 			$out['show_count'] = (bool) $config['show_count'];
 		}
 		if ( isset( $config['placeholder'] ) ) {
-			$out['placeholder'] = sanitize_text_field( (string) $config['placeholder'] );
+			$out['placeholder'] = Filtron_Filter_Base::normalize_display_text( sanitize_text_field( (string) $config['placeholder'] ) );
 		}
 		if ( isset( $config['prefix'] ) ) {
-			$out['prefix'] = sanitize_text_field( (string) $config['prefix'] );
+			$out['prefix'] = Filtron_Filter_Base::normalize_display_text( sanitize_text_field( (string) $config['prefix'] ) );
 		}
 		if ( isset( $config['suffix'] ) ) {
-			$out['suffix'] = sanitize_text_field( (string) $config['suffix'] );
+			$out['suffix'] = Filtron_Filter_Base::normalize_display_text( sanitize_text_field( (string) $config['suffix'] ) );
 		}
 		if ( isset( $config['step'] ) ) {
 			$out['step'] = is_numeric( $config['step'] ) ? (float) $config['step'] : 1;
@@ -1363,12 +1363,22 @@ class Filtron_Admin {
 				$config = $decoded;
 			}
 		}
+		if ( isset( $config['placeholder'] ) ) {
+			$config['placeholder'] = Filtron_Filter_Base::normalize_display_text( (string) $config['placeholder'] );
+		}
+		if ( isset( $config['prefix'] ) ) {
+			$config['prefix'] = Filtron_Filter_Base::normalize_display_text( (string) $config['prefix'] );
+		}
+		if ( isset( $config['suffix'] ) ) {
+			$config['suffix'] = Filtron_Filter_Base::normalize_display_text( (string) $config['suffix'] );
+		}
 		$row['config'] = $config;
 		unset( $row['config_json'] );
 		$row['id']         = (int) $row['id'];
 		$row['group_id']   = (int) $row['group_id'];
 		$row['sort_order'] = (int) $row['sort_order'];
 		$row['is_active']  = (int) $row['is_active'];
+		$row['label']      = Filtron_Filter_Base::normalize_display_text( (string) $row['label'] );
 		return $row;
 	}
 
