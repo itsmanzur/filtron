@@ -9,6 +9,9 @@
 	"keywords": [ "filtron", "filter", "container" ],
 	"textdomain": "filtron",
 	"usesContext": [ "postType" ],
+	"providesContext": {
+		"filtron/groupId": "groupId"
+	},
 	"attributes": {
 		"groupId": {
 			"type": "number",

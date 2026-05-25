@@ -8,7 +8,7 @@
 	"description": "Search input bound to indexed text.",
 	"keywords": [ "filtron", "filter", "search" ],
 	"textdomain": "filtron",
-	"usesContext": [ "postType" ],
+	"usesContext": [ "postType", "filtron/groupId" ],
 	"attributes": {
 		"label": {
 			"type": "string",

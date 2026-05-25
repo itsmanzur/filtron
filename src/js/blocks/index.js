@@ -27,10 +27,11 @@
 	 * Resolve selected Filtron container group post_type for current child block.
 	 *
 	 * @param {string} clientId Current block client id.
+	 * @param {Object} context  Block context.
 	 * @returns {string}
 	 */
-	function resolveGroupPostType( clientId ) {
-		var resolved = resolveContainerGroup( clientId );
+	function resolveGroupPostType( clientId, context ) {
+		var resolved = resolveContainerGroup( clientId, context );
 		if ( resolved && resolved.postType ) {
 			return resolved.postType;
 		}
@@ -41,45 +42,54 @@
 	 * Resolve parent Filtron container context for current child block.
 	 *
 	 * @param {string} clientId Current block client id.
+	 * @param {Object} context  Block context.
 	 * @returns {{ groupId: number, postType: string, insideContainer: boolean }}
 	 */
-	function resolveContainerGroup( clientId ) {
+	function resolveContainerGroup( clientId, context ) {
+		var ctx = context || {};
+		var contextGroupId = parseInt( ctx[ 'filtron/groupId' ], 10 ) || 0;
+
 		if ( ! clientId || ! wp.data || ! wp.data.select ) {
-			return { groupId: 0, postType: 'post', insideContainer: false };
+			return resolveGroupRow( contextGroupId, contextGroupId > 0 );
 		}
 
 		var be = wp.data.select( 'core/block-editor' );
-		if ( ! be || ! be.getBlockParents || ! be.getBlock ) {
-			return { groupId: 0, postType: 'post', insideContainer: false };
-		}
-
-		var parentIds = be.getBlockParents( clientId ) || [];
-		if ( ! parentIds.length ) {
-			return { groupId: 0, postType: 'post', insideContainer: false };
-		}
-
+		var parentIds = be && be.getBlockParents ? be.getBlockParents( clientId ) || [] : [];
 		var containerGroupId = 0;
-		var insideContainer = false;
-		parentIds.some( function ( parentId ) {
-			var blk = be.getBlock( parentId );
-			if ( blk && blk.name === 'filtron/container' ) {
-				insideContainer = true;
-				containerGroupId = parseInt( blk.attributes && blk.attributes.groupId, 10 ) || 0;
-				return true;
-			}
-			return false;
-		} );
+		var insideContainer = contextGroupId > 0;
 
-		if ( containerGroupId < 1 || ! Array.isArray( groupsData ) ) {
-			return { groupId: containerGroupId, postType: 'post', insideContainer: insideContainer };
+		if ( be && be.getBlockParents && be.getBlock && parentIds.length ) {
+			parentIds.some( function ( parentId ) {
+				var blk = be.getBlock( parentId );
+				if ( blk && blk.name === 'filtron/container' ) {
+					insideContainer = true;
+					containerGroupId = parseInt( blk.attributes && blk.attributes.groupId, 10 ) || 0;
+					return true;
+				}
+				return false;
+			} );
 		}
 
+		return resolveGroupRow( containerGroupId || contextGroupId, insideContainer );
+	}
+
+	/**
+	 * Resolve group row details for editor previews.
+	 *
+	 * @param {number} groupId         Filtron group id.
+	 * @param {boolean} insideContainer Whether block is inside a Filtron container.
+	 * @returns {{ groupId: number, postType: string, insideContainer: boolean }}
+	 */
+	function resolveGroupRow( groupId, insideContainer ) {
+		if ( groupId < 1 || ! Array.isArray( groupsData ) ) {
+			return { groupId: groupId, postType: 'post', insideContainer: insideContainer };
+		}
 		var groupRow = groupsData.find( function ( g ) {
-			return parseInt( g && g.id, 10 ) === containerGroupId;
+			return parseInt( g && g.id, 10 ) === groupId;
 		} );
 
 		return {
-			groupId: containerGroupId,
+			groupId: groupId,
 			postType: ( groupRow && groupRow.post_type ) ? groupRow.post_type : 'post',
 			insideContainer: insideContainer,
 		};
@@ -95,8 +105,8 @@
 		var attributes = props.attributes;
 		var setAttributes = props.setAttributes;
 		var context = props.context || {};
-		var containerContext = resolveContainerGroup( props.clientId );
-		var postType = resolveGroupPostType( props.clientId ) || context.postType || 'post';
+		var containerContext = resolveContainerGroup( props.clientId, context );
+		var postType = resolveGroupPostType( props.clientId, context ) || context.postType || 'post';
 		var filterType = props.filterType || 'checkbox';
 		var hasValidGroup = containerContext.insideContainer && containerContext.groupId > 0;
 
@@ -233,8 +243,9 @@
 		var blockProps = p.blockProps;
 		var titleFallback = p.titleFallback;
 		var clientId = p.clientId;
+		var context = p.context || {};
 
-		var postType = resolveGroupPostType( clientId );
+		var postType = resolveGroupPostType( clientId, context );
 
 		var facetState = useState( { status: 'loading', items: [] } );
 		var facet = facetState[ 0 ];
@@ -362,8 +373,9 @@
 		var blockProps = p.blockProps;
 		var titleFallback = p.titleFallback;
 		var clientId = p.clientId;
+		var context = p.context || {};
 
-		var postType = resolveGroupPostType( clientId );
+		var postType = resolveGroupPostType( clientId, context );
 
 		var facetState = useState( { status: 'loading', items: [] } );
 		var facet = facetState[ 0 ];
@@ -483,8 +495,9 @@
 	 */
 	function filtronFilterPreview( props, titleFallback, filterType ) {
 		var attributes = props.attributes;
+		var context = props.context || {};
 		var blockProps = useBlockProps( { className: 'filtron-block-preview' } );
-		var containerContext = resolveContainerGroup( props.clientId );
+		var containerContext = resolveContainerGroup( props.clientId, context );
 		var wrapPlaceholder = function ( message ) {
 			return el(
 				'div',
@@ -572,6 +585,7 @@
 				blockProps: blockProps,
 				titleFallback: titleFallback,
 				clientId: props.clientId,
+				context: context,
 			} );
 		}
 
@@ -581,6 +595,7 @@
 			blockProps: blockProps,
 			titleFallback: titleFallback,
 			clientId: props.clientId,
+			context: context,
 		} );
 	}
 

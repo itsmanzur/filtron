@@ -8,7 +8,7 @@
 	"description": "Numeric range slider filter.",
 	"keywords": [ "filtron", "filter", "range", "slider" ],
 	"textdomain": "filtron",
-	"usesContext": [ "postType" ],
+	"usesContext": [ "postType", "filtron/groupId" ],
 	"attributes": {
 		"label": {
 			"type": "string",

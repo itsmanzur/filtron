@@ -8,7 +8,7 @@
 	"description": "Select dropdown filter (taxonomy or meta facets).",
 	"keywords": [ "filtron", "filter", "select", "dropdown" ],
 	"textdomain": "filtron",
-	"usesContext": [ "postType" ],
+	"usesContext": [ "postType", "filtron/groupId" ],
 	"attributes": {
 		"label": {
 			"type": "string",
