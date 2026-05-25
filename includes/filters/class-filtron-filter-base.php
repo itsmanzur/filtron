@@ -86,6 +86,16 @@ abstract class Filtron_Filter_Base {
 			}
 		}
 
+		$bytes = self::iconv_codepoints_to_bytes( $value, 'ISO-8859-1' );
+		if ( null !== $bytes && self::is_valid_utf8( $bytes ) ) {
+			return wp_check_invalid_utf8( $bytes );
+		}
+
+		$bytes = self::iconv_codepoints_to_bytes( $value, 'Windows-1252' );
+		if ( null !== $bytes && self::is_valid_utf8( $bytes ) ) {
+			return wp_check_invalid_utf8( $bytes );
+		}
+
 		return $value;
 	}
 
@@ -242,6 +252,35 @@ abstract class Filtron_Filter_Base {
 		}
 
 		return $bytes;
+	}
+
+	/**
+	 * Rebuild original bytes with iconv when mbstring is unavailable.
+	 *
+	 * @param string $value    Mojibake string.
+	 * @param string $encoding Single-byte source encoding.
+	 * @return string|null
+	 */
+	private static function iconv_codepoints_to_bytes( string $value, string $encoding ): ?string {
+		if ( ! function_exists( 'iconv' ) ) {
+			return null;
+		}
+
+		$bytes = @iconv( 'UTF-8', $encoding . '//IGNORE', $value );
+		if ( ! is_string( $bytes ) || '' === $bytes ) {
+			return null;
+		}
+
+		return $bytes;
+	}
+
+	/**
+	 * Byte-level UTF-8 validation without requiring mbstring.
+	 *
+	 * @param string $value Raw bytes.
+	 */
+	private static function is_valid_utf8( string $value ): bool {
+		return '' === $value || 1 === preg_match( '//u', $value );
 	}
 
 	/**
