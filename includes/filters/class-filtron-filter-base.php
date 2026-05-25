@@ -139,7 +139,7 @@ abstract class Filtron_Filter_Base {
 				$codepoint = (int) $matches[1];
 				$map       = self::windows1252_control_codepoint_map();
 				if ( ! isset( $map[ $codepoint ] ) ) {
-					return (string) $matches[0];
+					return self::codepoint_to_utf8( $codepoint );
 				}
 				return self::codepoint_to_utf8( $map[ $codepoint ] );
 			},

@@ -20,7 +20,7 @@ class Filtron_Shortcode {
 	public static function register(): void {
 		add_shortcode( 'filtron_group', array( self::class, 'render_group' ) );
 		add_shortcode( 'filtron', array( self::class, 'render_group' ) );
-		add_filter( 'the_content', array( self::class, 'repair_rendered_content' ), 999 );
+		add_filter( 'the_content', array( self::class, 'repair_rendered_content' ), PHP_INT_MAX );
 	}
 
 	/**
