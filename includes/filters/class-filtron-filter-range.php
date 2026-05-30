@@ -22,6 +22,13 @@ class Filtron_Filter_Range extends Filtron_Filter_Base {
 	private ?array $min_max_cache = null;
 
 	/**
+	 * Cached numeric availability for the configured source key.
+	 *
+	 * @var bool|null
+	 */
+	private ?bool $has_indexed_numeric_cache = null;
+
+	/**
 	 * @see Filtron_Filter_Base::render()
 	 */
 	public function render(): string {
@@ -93,6 +100,35 @@ class Filtron_Filter_Range extends Filtron_Filter_Base {
 				'max' => $mm['max'],
 			),
 		);
+	}
+
+	/**
+	 * Whether this source key has numeric index rows for a useful range UI.
+	 */
+	public function has_indexed_numeric_values(): bool {
+		if ( null !== $this->has_indexed_numeric_cache ) {
+			return $this->has_indexed_numeric_cache;
+		}
+
+		$key = $this->get_source_key();
+		if ( '' === $key ) {
+			$this->has_indexed_numeric_cache = false;
+			return $this->has_indexed_numeric_cache;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'filtron_index';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table from prefix.
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM `{$table}` WHERE filter_key = %s AND filter_value_num IS NOT NULL",
+				$key
+			)
+		);
+
+		$this->has_indexed_numeric_cache = $count > 0;
+		return $this->has_indexed_numeric_cache;
 	}
 
 	/**

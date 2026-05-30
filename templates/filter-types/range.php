@@ -38,6 +38,22 @@ if ( $cmin > $cmax ) {
 
 $prefix = $filter->get_prefix();
 $suffix = $filter->get_suffix();
+
+if ( ! $filter->has_indexed_numeric_values() ) :
+	?>
+<div class="filtron-filter-range filtron-filter-range--empty" id="<?php echo esc_attr( $uid ); ?>">
+	<?php if ( '' !== $filter->get_label() ) : ?>
+		<div class="filtron-filter-range__title">
+			<?php echo $filter->get_label(); ?>
+		</div>
+	<?php endif; ?>
+	<p class="filtron-filter-range__empty" role="status">
+		<?php esc_html_e( 'No numeric values found for this range source yet.', 'filtron' ); ?>
+	</p>
+</div>
+	<?php
+	return;
+endif;
 ?>
 <div
 	class="filtron-filter-range"

@@ -410,6 +410,7 @@ class Filtron_Admin {
 			</p>
 			<p class="description"><?php esc_html_e( 'Drag rows to reorder facets. Add Filter creates a new row; Ctrl+S (Cmd+S on Mac) saves the filter you are editing.', 'filtron' ); ?></p>
 			<?php echo self::render_shortcode_copy_panel( $group_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<?php echo self::render_filter_source_health_notices( $group_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
 			<div
 				id="filtron-admin-root"
@@ -1407,6 +1408,121 @@ class Filtron_Admin {
 			}
 		}
 		return $out;
+	}
+
+	/**
+	 * Render admin warnings when active filters point at missing index data.
+	 *
+	 * @param int $group_id Group id.
+	 */
+	private static function render_filter_source_health_notices( int $group_id ): string {
+		$items     = self::get_items_for_group( $group_id );
+		$post_type = self::get_group_post_type( $group_id );
+		$warnings  = array();
+
+		foreach ( $items as $item ) {
+			if ( empty( $item['is_active'] ) ) {
+				continue;
+			}
+
+			$type       = isset( $item['filter_type'] ) ? sanitize_key( (string) $item['filter_type'] ) : '';
+			$source_key = isset( $item['source_key'] ) ? sanitize_text_field( (string) $item['source_key'] ) : '';
+			$label      = isset( $item['label'] ) ? (string) $item['label'] : $source_key;
+			if ( '' === $source_key ) {
+				continue;
+			}
+
+			if ( in_array( $type, array( 'checkbox', 'select', 'search' ), true ) && self::count_indexed_values( $source_key, $post_type ) < 1 ) {
+				$warnings[] = sprintf(
+					/* translators: 1: filter label, 2: source key, 3: post type */
+					__( '%1$s uses "%2$s", but no indexed values were found for %3$s.', 'filtron' ),
+					$label,
+					$source_key,
+					$post_type
+				);
+			}
+
+			if ( 'range' === $type && self::count_indexed_numeric_values( $source_key, $post_type ) < 1 ) {
+				$warnings[] = sprintf(
+					/* translators: 1: filter label, 2: source key, 3: post type */
+					__( '%1$s is a range filter, but "%2$s" has no indexed numeric values for %3$s.', 'filtron' ),
+					$label,
+					$source_key,
+					$post_type
+				);
+			}
+		}
+
+		if ( array() === $warnings ) {
+			return '';
+		}
+
+		$html  = '<div class="filtron-notice filtron-notice-warning filtron-source-health" role="status">';
+		$html .= '<span class="dashicons dashicons-warning" aria-hidden="true"></span>';
+		$html .= '<div><strong>' . esc_html__( 'Filter data needs attention', 'filtron' ) . '</strong>';
+		$html .= '<ul>';
+		foreach ( $warnings as $warning ) {
+			$html .= '<li>' . esc_html( $warning ) . '</li>';
+		}
+		$html .= '</ul>';
+		$html .= '<p>' . esc_html__( 'Rebuild the index, choose a real source key, or deactivate temporary filters before storefront QA.', 'filtron' ) . '</p>';
+		$html .= '</div></div>';
+
+		return $html;
+	}
+
+	/**
+	 * @param int $group_id Group id.
+	 */
+	private static function get_group_post_type( int $group_id ): string {
+		global $wpdb;
+		$table = $wpdb->prefix . 'filtron_groups';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$post_type = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT post_type FROM `{$table}` WHERE id = %d LIMIT 1",
+				$group_id
+			)
+		);
+
+		return is_string( $post_type ) && '' !== $post_type ? sanitize_key( $post_type ) : 'post';
+	}
+
+	/**
+	 * @param string $source_key Filter source key.
+	 * @param string $post_type  Group post type.
+	 */
+	private static function count_indexed_values( string $source_key, string $post_type ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'filtron_index';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT filter_value) FROM `{$table}` WHERE filter_key = %s AND post_type = %s AND filter_value <> ''",
+				$source_key,
+				$post_type
+			)
+		);
+	}
+
+	/**
+	 * @param string $source_key Filter source key.
+	 * @param string $post_type  Group post type.
+	 */
+	private static function count_indexed_numeric_values( string $source_key, string $post_type ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'filtron_index';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM `{$table}` WHERE filter_key = %s AND post_type = %s AND filter_value_num IS NOT NULL",
+				$source_key,
+				$post_type
+			)
+		);
 	}
 
 	/**

@@ -37,6 +37,11 @@ if ( '' === $fkey ) {
 	<?php endif; ?>
 
 	<ul class="filtron-filter-checkbox__list" role="list">
+		<?php if ( array() === $options ) : ?>
+			<li class="filtron-filter-checkbox__empty" role="status">
+				<?php esc_html_e( 'No filter values found for this source key yet.', 'filtron' ); ?>
+			</li>
+		<?php endif; ?>
 		<?php foreach ( $options as $opt ) : ?>
 			<?php
 			$val   = isset( $opt['value'] ) ? (string) $opt['value'] : '';
