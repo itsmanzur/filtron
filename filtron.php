@@ -3,7 +3,7 @@
  * Plugin Name:       Filtron
  * Plugin URI:        https://wordpress.org/plugins/filtron/
  * Description:       Fast, secure filter system for WooCommerce, custom post types, and directories.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            Filtron
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'FILTRON_VERSION', '1.0.0' );
+define( 'FILTRON_VERSION', '1.0.1' );
 define( 'FILTRON_DB_VERSION', '1.0' );
 define( 'FILTRON_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FILTRON_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

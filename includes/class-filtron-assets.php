@@ -38,13 +38,16 @@ class Filtron_Assets {
 			return;
 		}
 
-		$ver = defined( 'FILTRON_VERSION' ) ? FILTRON_VERSION : '1.0.0';
+		$ver          = defined( 'FILTRON_VERSION' ) ? FILTRON_VERSION : '1.0.0';
+		$skeleton_ver = self::asset_version( 'assets/css/filtron-skeleton.css', $ver );
+		$frontend_ver = self::asset_version( 'assets/css/filtron-frontend.css', $ver );
+		$script_ver   = self::asset_version( 'src/js/filtron-frontend.js', $ver );
 
 		wp_register_style(
 			'filtron-skeleton',
 			FILTRON_PLUGIN_URL . 'assets/css/filtron-skeleton.css',
 			array(),
-			$ver
+			$skeleton_ver
 		);
 		wp_enqueue_style( 'filtron-skeleton' );
 
@@ -61,7 +64,7 @@ class Filtron_Assets {
 			'filtron-frontend',
 			FILTRON_PLUGIN_URL . 'assets/css/filtron-frontend.css',
 			array( 'filtron-skeleton', 'nouislider' ),
-			$ver
+			$frontend_ver
 		);
 		wp_enqueue_style( 'filtron-frontend' );
 
@@ -82,7 +85,7 @@ class Filtron_Assets {
 			'filtron-frontend',
 			FILTRON_PLUGIN_URL . 'src/js/filtron-frontend.js',
 			$deps,
-			$ver,
+			$script_ver,
 			true
 		);
 		wp_enqueue_script( 'filtron-frontend' );
@@ -136,5 +139,16 @@ class Filtron_Assets {
 				),
 			)
 		);
+	}
+
+	/**
+	 * File-based asset version for reliable cache busting during local QA and releases.
+	 *
+	 * @param string $relative Relative plugin asset path.
+	 * @param string $fallback Fallback version.
+	 */
+	private static function asset_version( string $relative, string $fallback ): string {
+		$path = FILTRON_PLUGIN_DIR . ltrim( $relative, '/\\' );
+		return is_readable( $path ) ? (string) filemtime( $path ) : $fallback;
 	}
 }

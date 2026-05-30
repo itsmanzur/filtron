@@ -583,7 +583,7 @@ class Filtron_Gutenberg {
 		}
 
 		$html  = '<section class="' . esc_attr( $container_classes ) . '"';
-		$html .= ' data-filtron-group="1"';
+		$html .= ' data-filtron-group="' . esc_attr( (string) $gid ) . '"';
 		$html .= ' data-filtron-group-id="' . esc_attr( (string) $gid ) . '"';
 		$html .= ' data-filtron-post-type="' . esc_attr( $post_type ) . '"';
 		$html .= ' data-filtron-per-page="' . esc_attr( (string) $per_page ) . '"';

@@ -4,7 +4,7 @@ Tags: filters, woocommerce, product filters, gutenberg, ajax
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -108,6 +108,11 @@ Yes. Filtron normalizes UTF-8 display text and repairs common mojibake output fo
 4. Settings page for cleanup and frontend theme colors.
 
 == Changelog ==
+
+= 1.0.1 =
+
+* Polished frontend filter, drawer, and product card styling toward the reference design.
+* Improved storefront stylesheet cache busting through the plugin version.
 
 = 1.0.0 =
 

@@ -119,3 +119,10 @@ php -l includes/integrations/class-filtron-shortcode.php
 ```
 
 This repository intentionally avoids committing temporary browser or QA harness files.
+
+## Changelog
+
+### 1.0.1
+
+- Polished frontend filter, drawer, and product card styling toward the reference design.
+- Improved storefront stylesheet cache busting through the plugin version.
